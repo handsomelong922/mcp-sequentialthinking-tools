@@ -1,0 +1,11 @@
+services:
+  mcp-sequentialthinking-tools:
+    image: ghcr.io/handsomelong922/mcp-sequentialthinking-tools:latest
+    container_name: mcp-sequentialthinking-tools
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - TRANSPORT=http
+      - PORT=3000
+      - MAX_HISTORY_SIZE=1000

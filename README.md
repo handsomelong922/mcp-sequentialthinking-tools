@@ -93,6 +93,73 @@ The server tracks your progress and supports:
 - Maintaining context across multiple steps
 - Suggesting next steps based on current findings
 
+## Docker Deployment
+
+A pre-built Docker image is automatically published to the GitHub
+Container Registry (GHCR) on every push to `main` and on every
+version tag.
+
+**Image address:**
+
+```
+ghcr.io/handsomelong922/mcp-sequentialthinking-tools:latest
+```
+
+### One-click deploy with Docker Compose
+
+1. Download the `docker-compose.yml` file from this repository (or
+   copy the snippet below).
+2. Run:
+
+```bash
+docker compose up -d
+```
+
+`docker-compose.yml`:
+
+```yaml
+services:
+  mcp-sequentialthinking-tools:
+    image: ghcr.io/handsomelong922/mcp-sequentialthinking-tools:latest
+    container_name: mcp-sequentialthinking-tools
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - TRANSPORT=http
+      - PORT=3000
+      - MAX_HISTORY_SIZE=1000
+```
+
+The server will be available at `http://localhost:3000`.
+
+### One-click deploy with Docker run
+
+```bash
+docker run -d \
+  --name mcp-sequentialthinking-tools \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -e TRANSPORT=http \
+  -e PORT=3000 \
+  -e MAX_HISTORY_SIZE=1000 \
+  ghcr.io/handsomelong922/mcp-sequentialthinking-tools:latest
+```
+
+### Using the HTTP transport in your MCP client
+
+Once the container is running, point your MCP client at the server:
+
+```json
+{
+  "mcpServers": {
+    "mcp-sequentialthinking-tools": {
+      "url": "http://localhost:3000/mcp"
+    }
+  }
+}
+```
+
 ## Configuration
 
 This server requires configuration through your MCP client. Here are
