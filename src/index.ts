@@ -6,11 +6,13 @@
 import { McpServer } from 'tmcp';
 import { ValibotJsonSchemaAdapter } from '@tmcp/adapter-valibot';
 import { StdioTransport } from '@tmcp/transport-stdio';
+import { HttpTransport } from '@tmcp/transport-http';
 import * as v from 'valibot';
 import chalk from 'chalk';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { serve } from 'srvx';
 import { SequentialThinkingSchema, SEQUENTIAL_THINKING_TOOL } from './schema.js';
 import { ThoughtData, ToolRecommendation, StepRecommendation, Tool } from './types.js';
 
@@ -281,9 +283,35 @@ server.tool(
 );
 
 async function main() {
-	const transport = new StdioTransport(server);
-	transport.listen();
-	console.error('Sequential Thinking MCP Server running on stdio');
+	const transportMode = process.env.TRANSPORT ?? 'stdio';
+
+	if (transportMode === 'http') {
+		const port = parseInt(process.env.PORT ?? '3000', 10);
+		const httpTransport = new HttpTransport(server, { path: '/mcp' });
+		serve({
+			port,
+			async fetch(req) {
+				const response = await httpTransport.respond(req);
+				if (response !== null) {
+					return response;
+				}
+				// Health check endpoint
+				if (new URL(req.url).pathname === '/health') {
+					return new Response(JSON.stringify({ status: 'ok' }), {
+						headers: { 'content-type': 'application/json' },
+					});
+				}
+				return new Response('Not Found', { status: 404 });
+			},
+		});
+		console.error(
+			`Sequential Thinking MCP Server running on HTTP (port ${port}, path /mcp)`,
+		);
+	} else {
+		const stdioTransport = new StdioTransport(server);
+		stdioTransport.listen();
+		console.error('Sequential Thinking MCP Server running on stdio');
+	}
 }
 
 main().catch((error) => {
